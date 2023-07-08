@@ -1,0 +1,10 @@
+/data/FASER/MC/sim/mc22/genie/200003/ntp/s0008/FaserMC-MC22_Genie_all_600invfb_v1-200003-00010-s0008-NTUP.root
+/data/FASER/MC/sim/mc22/genie/200003/ntp/s0008/FaserMC-MC22_Genie_all_600invfb_v1-200003-00011-s0008-NTUP.root
+/data/FASER/MC/sim/mc22/genie/200003/ntp/s0008/FaserMC-MC22_Genie_all_600invfb_v1-200003-00012-s0008-NTUP.root
+/data/FASER/MC/sim/mc22/genie/200003/ntp/s0008/FaserMC-MC22_Genie_all_600invfb_v1-200003-00013-s0008-NTUP.root
+/data/FASER/MC/sim/mc22/genie/200003/ntp/s0008/FaserMC-MC22_Genie_all_600invfb_v1-200003-00014-s0008-NTUP.root
+/data/FASER/MC/sim/mc22/genie/200003/ntp/s0008/FaserMC-MC22_Genie_all_600invfb_v1-200003-00015-s0008-NTUP.root
+/data/FASER/MC/sim/mc22/genie/200003/ntp/s0008/FaserMC-MC22_Genie_all_600invfb_v1-200003-00016-s0008-NTUP.root
+/data/FASER/MC/sim/mc22/genie/200003/ntp/s0008/FaserMC-MC22_Genie_all_600invfb_v1-200003-00017-s0008-NTUP.root
+/data/FASER/MC/sim/mc22/genie/200003/ntp/s0008/FaserMC-MC22_Genie_all_600invfb_v1-200003-00018-s0008-NTUP.root
+/data/FASER/MC/sim/mc22/genie/200003/ntp/s0008/FaserMC-MC22_Genie_all_600invfb_v1-200003-00019-s0008-NTUP.root
