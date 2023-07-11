@@ -46,6 +46,7 @@ bool compareIVertex(const T& struct1, const T& struct2) {
 // Global variables.
 std::vector<Track> tracks;
 std::vector<Vertex> verteces;
+int nvertex;
 
 
 void ReadVertexFile(std::string vtx_file) {
@@ -69,6 +70,7 @@ void ReadVertexFile(std::string vtx_file) {
 
 	// For the matching of vertex and tracks;
 	int ivertex = -1;
+	nvertex = 0;
 
 
 	std::string line_buf;
@@ -103,6 +105,7 @@ void ReadVertexFile(std::string vtx_file) {
 			tracks.push_back(track);
 		} else if (type_name == "1ry_vtx") {
 			ivertex ++;
+			nvertex ++;
 			iss >> area_id >> vx >> vy >> plate_id >> ntrk;
 
 			Vertex vertex;
@@ -120,10 +123,24 @@ void ReadVertexFile(std::string vtx_file) {
 	// Sort with ivertex.
 	std::sort(tracks.begin(), tracks.end(), compareIVertex<Track>);
 	std::sort(verteces.begin(), verteces.end(), compareIVertex<Vertex>);
+
+	std::cout << nvertex << " verteces are read." << std::endl;
 }
 
-void calc_ratio() {
+void CalcRatio(std::string output_file = "./output/p_true_vs_p_rec.txt") {
+
+	std::ofstream ofs(output_file);
 	
+	int num_miss_numu_event = 0;
+	int num_misidentify_numu_event = 0;
+	int num_miss_muon = 0;
+
+	bool is_p_true_over_200;
+	bool is_p_rec_over_200;
+
+	bool is_mu_p_true_over_200;
+	bool is_mu_p_rec_over_200;
+
 	for (int i=0; i<verteces.size(); i++) {
 		Vertex vertex = verteces[i];
 		int ivertex = vertex.ivertex;
@@ -134,18 +151,48 @@ void calc_ratio() {
 		std::vector<Track>::iterator iter_upper = std::upper_bound(tracks.begin(), tracks.end(), trk_buf, compareIVertex<Track>);
 		int idx_lower = std::distance(tracks.begin(), iter_lower);
 		int idx_upper = std::distance(tracks.begin(), iter_upper);
+
+		is_p_true_over_200 = false;
+		is_p_rec_over_200 = false;
+		is_mu_p_true_over_200 = false;
+		is_mu_p_rec_over_200 = false;
 		
-		std::cout << "Event ID: " << tracks[idx_lower].event_id << std::endl;
+		ofs << "Event ID: " << tracks[idx_lower].event_id << std::endl;
 		for (int j=idx_lower; j<idx_upper; j++) {
 			Track track = tracks[j];
-			std::cout << "PGD: " << track.pdg_id << "\tP_true: " << track.p_true << "\tP_rec: " << track.p_reco << std::endl;
+			ofs << "PGD: " << track.pdg_id << "\tP_true: " << track.p_true << "\tP_rec: " << track.p_reco << std::endl;
+
+			if (track.p_reco > 6990) continue;
+			if (track.p_true > 200) is_p_true_over_200 = true;
+			if (track.p_reco > 200) is_p_rec_over_200 = true;
+			if (abs(track.pdg_id) == 13 and track.p_true > 200) is_mu_p_true_over_200 = true;
+			if (abs(track.pdg_id) == 13 and track.p_reco > 200) is_mu_p_rec_over_200 = true;
 		}
-		std::cout << "======================================================================" << std::endl;
+
+		if (is_p_true_over_200 and !is_p_rec_over_200) {
+			num_miss_numu_event++;
+			ofs << "P_true > 200 but P_reco < 200." << std::endl;;
+		}
+		if (!is_p_true_over_200 and is_p_rec_over_200) {
+			ofs << "P_true < 200 but P_reco > 200." << std::endl;;
+			num_misidentify_numu_event++;
+		}
+
+		if (is_mu_p_true_over_200 and !is_mu_p_rec_over_200) {
+			ofs << "Muon P_true > 200 but P_reco < 200." << std::endl;;
+			num_miss_muon ++;
+		}
+		ofs << "======================================================================" << std::endl;
 	}
+
+	ofs << std::endl << std::endl;
+	ofs << "A ratio P_true > 200 and P_reco < 200: " << num_miss_numu_event << "/" << nvertex << "= " << (double)num_miss_numu_event/nvertex << std::endl;
+	ofs << "A ratio P_true < 200 and P_reco > 200: " << num_misidentify_numu_event << "/" << nvertex << "= " << (double)num_misidentify_numu_event/nvertex << std::endl;
+	ofs << "A ratio mu P_true < 200 and mu P_reco > 200: " << num_miss_muon << "/" << nvertex << "= " << (double)num_miss_muon/nvertex << std::endl;
 }
 
 int main(int argc, char** argv) {
-	ReadVertexFile("./output/vtx_test.txt");
-	calc_ratio();
+	ReadVertexFile("./output/vtx_info_nuall_00010-00039_p500_numucc_v20230706_measured_mometum_50plates.txt");
+	CalcRatio();
 	return 0;
 }
