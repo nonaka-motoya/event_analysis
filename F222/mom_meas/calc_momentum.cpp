@@ -47,6 +47,7 @@ struct Vertex {
 // Global variables.
 std::vector<Track> tracks;
 std::vector<Vertex> verteces;
+std::vector<std::string> invalid_files;
 
 // DEBUG
 //TCanvas* c = new TCanvas("c");
@@ -157,20 +158,40 @@ void ReadVertexFile(std::string vtx_file) {
 }
 
 bool IsTrack(EdbTrackP* track, int event_id, int plate_id, int seg_id) {
-	event_id += 100000;
 	int nseg = track -> N();
 	for (int i=0; i<nseg; i++) {
 		EdbSegP* seg = track -> GetSegment(i);
-		if (seg -> MCEvt() == event_id and seg -> ScanID().GetPlate() == plate_id and seg -> ID() == seg_id) return true;
+		if ((seg -> MCEvt()%100000)==event_id and seg -> ScanID().GetPlate() == plate_id and seg -> ID() == seg_id) return true;
 	}
 
 	return false;
 }
 
+bool IsFileValid(std::string input_files) {
+	TFile* file = new TFile(input_files.c_str(), "READ");
+	if (!file->IsOpen()) {
+		invalid_files.push_back(input_files);
+		file -> Close();
+		return false;
+	}
+	TTree* tree = (TTree*) file -> Get("tracks");
+
+	int nentries = tree -> GetEntries();
+	std::cout << nentries << " entries." << std::endl;
+
+	if (nentries == 0) {
+		invalid_files.push_back(input_files);
+		file -> Close();
+		return false;
+	}
+	file -> Close();
+	return true;
+}
+
 
 void CalcMomentum(std::string linked_tracks_file) {
 	// Extrach Track ID.
-	std::string pattern = "evt_(\\d+)_pl";
+	std::string pattern = "evt_(\\d+)_";
 	std::regex regex(pattern);
 	std::smatch match;
 	std::string event_id;
@@ -182,10 +203,12 @@ void CalcMomentum(std::string linked_tracks_file) {
 		exit(1);
 	}
 
-	TString cut = Form("s.eMCEvt==%d", std::stoi(event_id)+100000);
+	TString cut = Form("(s.eMCEvt%%100000)==%d", std::stoi(event_id));
 
 	EdbDataProc* dproc = new EdbDataProc;
 	EdbPVRec* pvr = new EdbPVRec;
+
+	if (!IsFileValid(linked_tracks_file)) return;
 
 	dproc -> ReadTracksTree(*pvr, linked_tracks_file.c_str(), cut);
 	int ntrk = pvr -> Ntracks();
@@ -199,7 +222,8 @@ void CalcMomentum(std::string linked_tracks_file) {
 
 	// For the momentum measurement.
 	FnuMomCoord mc;
-	mc.ReadParFile("/home/mnonaka/environment/FASERSoft/FnuMomCoord/par/MC_plate_1_50.txt");
+	//mc.ReadParFile("/home/mnonaka/environment/FASERSoft/FnuMomCoord/par/MC_plate_1_50.txt");
+	mc.ReadParFile("/home/mnonaka/environment/FASERSoft/FnuMomCoord/par/MC_plate_1_100.txt");
 	mc.ShowPar();
 
 
@@ -213,6 +237,8 @@ void CalcMomentum(std::string linked_tracks_file) {
 			EdbTrackP* track = pvr -> GetTrack(itrk);
 			if (IsTrack(track, eve, plate_id, track_id)) {
 				tracks[i].p_reco = mc.CalcMomentum(track, 0);
+				tracks[i].plate_id_last = track -> GetSegmentLast() -> ScanID().GetPlate();
+				tracks[i].npl = track -> Npl();
 				//mc.DrawMomGraphCoord(track, c, "test");
 			}
 		}
@@ -251,6 +277,85 @@ void WriteVertexFile(std::string output_file) {
 	
 }
 
+void WriteVertexFileIntoRootFile(std::string output_file) {
+	TFile* file = new TFile(output_file.c_str(), "RECREATE");
+	TTree* tree_vertex = new TTree("vertex", "vertex");
+	TTree* tree_track = new TTree("track", "track");
+
+	TString type;
+	int ivertex;
+	// For verteces.
+	int area_id, v_plate, ntrk;
+	double vx, vy;
+
+	// For tracks.
+	int plate_id, seg_id, plate_id_last, npl, pdg_id, event_id;
+	double x, y, p_true, p_rec;
+
+	Vertex vertex;
+
+	tree_vertex -> Branch("ivertex", &ivertex);
+	tree_vertex -> Branch("area_id", &area_id);
+	tree_vertex -> Branch("vx", &vx);
+	tree_vertex -> Branch("vy", &vy);
+	tree_vertex -> Branch("plate", &v_plate);
+	tree_vertex -> Branch("ntrk", &ntrk);
+
+	tree_track -> Branch("ivertex", &ivertex);
+	tree_track -> Branch("event_id", &event_id);
+	tree_track -> Branch("plate_id", &plate_id);
+	tree_track -> Branch("seg_id", &seg_id);
+	tree_track -> Branch("x", &x);
+	tree_track -> Branch("y", &y);
+	tree_track -> Branch("plate_id_last", &plate_id_last);
+	tree_track -> Branch("npl", &npl);
+	tree_track -> Branch("pdg_id", &pdg_id);
+	tree_track -> Branch("p_true", &p_true);
+	tree_track -> Branch("p_rec", &p_rec);
+
+	std::sort(tracks.begin(), tracks.end(), compareIVertex<Track>);
+	std::sort(verteces.begin(), verteces.end(), compareIVertex<Vertex>);
+
+	for (int i=0; i<verteces.size(); i++) {
+		vertex = verteces[i];
+		ivertex = vertex.ivertex;
+		area_id = vertex.area_id;
+		vx = vertex.vx;
+		vy = vertex.vy;
+		v_plate = vertex.plate;
+		ntrk = vertex.ntrk;
+		
+		tree_vertex -> Fill();
+
+	  	Track trk_buf;
+	  	trk_buf.ivertex = ivertex;
+		std::vector<Track>::iterator iter_lower = std::lower_bound(tracks.begin(), tracks.end(), trk_buf, compareIVertex<Track>);
+		std::vector<Track>::iterator iter_upper = std::upper_bound(tracks.begin(), tracks.end(), trk_buf, compareIVertex<Track>);
+		int idx_lower = std::distance(tracks.begin(), iter_lower);
+		int idx_upper = std::distance(tracks.begin(), iter_upper);
+
+		for (int j=idx_lower; j<idx_upper; j++) {
+			Track track = tracks[j];
+			event_id = track.event_id;
+			plate_id = track.plate_id;
+			seg_id = track.seg_id;
+			x = track.x_first;
+			y = track.y_first;
+			plate_id_last = track.plate_id_last;
+			npl = track.npl;
+			pdg_id = track.pdg_id;
+			p_true = track.p_true;
+			p_rec = track.p_reco;
+			
+			tree_track -> Fill();
+		}
+	}
+
+	tree_vertex -> Write();
+	tree_track -> Write();
+	file -> Close();
+}
+
 void Run(std::string ltlists) {
 	std::ifstream ifs(ltlists);
 
@@ -264,6 +369,11 @@ void Run(std::string ltlists) {
 	while(std::getline(ifs, path)) {
 		CalcMomentum(path);
 	}
+
+	std::cout << "Invalid files: " << std::endl;
+	for (auto file: invalid_files) {
+		std::cout << file << std::endl;
+	}
 	//c -> Print("test.pdf]");
 }
 
@@ -271,10 +381,12 @@ int main(int argc, char** argv) {
 	ReadVertexFile("./input_files/vtx_info_nuall_00010-00039_p500_numucc_v20230706.txt");
 
 	//CalcMomentum("/data/FASER/fasernu-pilot-run/MDC_rec_tmp/20230402_nuall_00010-00019_p300/evt_21581_pl107_527/linked_tracks.root");
-	Run("./input_files/LTList.txt");
+	//Run("./input_files/LTList.txt.debug");
+	Run("./input_files/LTList_reconnected.txt");
 
-	WriteVertexFile("./output/vtx_info_nuall_00010-00039_p500_numucc_v20230706_measured_mometum.txt");
+	WriteVertexFile("./output/vtx_info_nuall_00010-00039_p500_numucc_v20230706_reconnected_measured_mometum_100plates.txt");
 	//WriteVertexFile("./output/vtx_test.txt");
+	//WriteVertexFileIntoRootFile("./output/vtx_info_nuall_00010-00039_p500_numucc_v20230706_reconnected_measured_mometum_100plates.txt");
 	
 	return 0;
 }
