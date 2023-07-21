@@ -131,18 +131,27 @@ void CalcRatio(std::string output_file = "./output/p_true_vs_p_rec.txt") {
 
 	std::ofstream ofs(output_file);
 	
-	int num_miss_numu_event = 0;
-	int num_misidentify_numu_event = 0;
-	int num_miss_muon = 0;
-	int num_over_200 = 0;
-	int num_under_200 = 0;
-	int num_mu_over_200 = 0;
-	int A_A = 0;
-	int B_B = 0;
+	// To calculate the ratio.
+	int num_p_true_over = 0;
+	int num_p_true_under = 0;
 
+	int num_p_true_over_p_rec_over = 0;
+	int num_p_true_over_p_rec_under = 0;
+	int num_p_true_under_p_rec_over = 0;
+	int num_p_true_under_p_rec_under = 0;
+
+	// For muon.
+	int num_mu_p_true_over = 0;
+	int num_mu_p_true_under = 0;
+
+	int num_mu_p_true_over_p_rec_over = 0;
+	int num_mu_p_true_over_p_rec_under = 0;
+	int num_mu_p_true_under_p_rec_over = 0;
+	int num_mu_p_true_under_p_rec_under = 0;
+
+	// To check the event;
 	bool is_p_true_over_200;
 	bool is_p_rec_over_200;
-
 	bool is_mu_p_true_over_200;
 	bool is_mu_p_rec_over_200;
 
@@ -157,6 +166,7 @@ void CalcRatio(std::string output_file = "./output/p_true_vs_p_rec.txt") {
 		int idx_lower = std::distance(tracks.begin(), iter_lower);
 		int idx_upper = std::distance(tracks.begin(), iter_upper);
 
+		// Initialize the flags.
 		is_p_true_over_200 = false;
 		is_p_rec_over_200 = false;
 		is_mu_p_true_over_200 = false;
@@ -168,74 +178,87 @@ void CalcRatio(std::string output_file = "./output/p_true_vs_p_rec.txt") {
 			ofs << "PGD: " << track.pdg_id << "\tNpl: " << track.npl << "\tP_true: " << track.p_true << "\tP_rec: " << track.p_reco << std::endl;
 
 
-			if (track.npl < 10) {
-				ofs << "Diverge!" << std::endl;
-				continue;
-			}
 			if (track.p_true > 200) is_p_true_over_200 = true;
 			if (track.p_reco > 200) is_p_rec_over_200 = true;
-			if (abs(track.pdg_id) == 13 and track.p_true > 200) is_mu_p_true_over_200 = true;
-			if (abs(track.pdg_id) == 13 and track.p_reco > 200) is_mu_p_rec_over_200 = true;
+
+			if (abs(track.pdg_id) == 13) {
+				if (track.p_true > 200) is_mu_p_true_over_200 = true;
+				if (track.p_reco > 200) is_mu_p_rec_over_200 = true;
+			}
 		}
 
+		// Check if p_true > 200.
 		if (is_p_true_over_200) {
-			num_over_200 ++;
+			num_p_true_over++;
+			// Check if p_rec > 200.
+			if (is_p_rec_over_200) {
+				num_p_true_over_p_rec_over ++;
+			} else {
+				num_p_true_over_p_rec_under ++;
+			}
 		} else {
-			num_under_200 ++;
+			num_p_true_under++;
+			// Check if p_rec > 200.
+			if (is_p_rec_over_200) {
+				num_p_true_under_p_rec_over ++;
+			} else {
+				num_p_true_under_p_rec_under ++;
+			}
 		}
 
+		// Check if muon's p_true > 200.
 		if (is_mu_p_true_over_200) {
-			num_mu_over_200 ++;
+			num_mu_p_true_over ++;
+			// Check if muon's p_rec > 200.
+			if (is_mu_p_rec_over_200) {
+				num_mu_p_true_over_p_rec_over ++;
+			} else {
+				num_mu_p_true_over_p_rec_under ++;
+			}
+		} else {
+			num_mu_p_true_under ++;
+			// Check if muon's p_rec > 200.
+			if (is_mu_p_rec_over_200) {
+				num_mu_p_true_under_p_rec_over ++;
+			} else {
+				num_mu_p_true_under_p_rec_under ++;
+			}
 		}
 
-		if (is_p_true_over_200 and !is_p_rec_over_200) {
-			num_miss_numu_event++;
-			ofs << "P_true > 200 but P_reco < 200." << std::endl;;
-		}
-
-		if (is_p_true_over_200 and is_p_rec_over_200) {
-			A_A ++;
-		}
-
-		if (!is_p_true_over_200 and !is_p_rec_over_200) {
-			B_B++;
-		}
-
-		if (!is_p_true_over_200 and is_p_rec_over_200) {
-			ofs << "P_true < 200 but P_reco > 200." << std::endl;;
-			num_misidentify_numu_event++;
-		}
-
-		if (is_mu_p_true_over_200 and !is_mu_p_rec_over_200) {
-			ofs << "Muon P_true > 200 but P_reco < 200." << std::endl;;
-			num_miss_muon ++;
-		}
 		ofs << "======================================================================" << std::endl;
 	}
 
 	ofs << std::endl << std::endl;
 
-	ofs << "少なくとも1本p_true>200GeVのトラックいるのにp_rec>200GeVは1本もいないeventの割合: " << num_miss_numu_event << "/" << num_over_200 << "= " << (double)num_miss_numu_event/num_over_200 << std::endl;
-	ofs << "すべてのトラックがp_true<200GeVなのにp_rec>200GeVのトラックがいる割合: " << num_misidentify_numu_event << "/" << num_under_200 << "= " << (double)num_misidentify_numu_event/num_under_200 << std::endl;
-	ofs << "p_true>200GeVのmuonがいるのにp_rec<200GeVになる割合 : " << num_miss_muon << "/" << num_mu_over_200 << "= " << (double)num_miss_muon/num_mu_over_200 << std::endl;
 
 	ofs << std::endl << std::endl;
 
 	ofs << "Number of events: " << nvertex << std::endl;
-	ofs << "少なくとも1本p_true>200GeVのトラックがいるevent数: " << num_over_200 << std::endl;
-	ofs << "すべてのトラックがp_true<200GeVのevent数: " << num_under_200 << std::endl;
-	ofs << "p_true>200GeVのmuonがいるevent数: " << num_mu_over_200 << std::endl;
+	ofs << "少なくとも1本p_true>200GeVのトラックがいるevent数: " << num_p_true_over << std::endl;
+	ofs << "すべてのトラックがp_true<200GeVのevent数: " << num_p_true_under << std::endl;
+	//ofs << "p_true>200GeVのmuonがいるevent数: " << num_mu_over_200 << std::endl;
 
 	ofs << std::endl << std::endl;
 
-	ofs << "| | P_true>200 | P_true<200 |" << std::endl;
+	ofs << "| | P_rec > 200 | P_rec < 200 |" << std::endl;
 	ofs << "| --- | --- | --- |" << std::endl;
-	ofs << "| P_rec>200 | " << (double)A_A/num_over_200 << " | " << (double)num_misidentify_numu_event/num_under_200 << " |" << std::endl;
-	ofs << "| P_rec<200 | " << (double)num_miss_numu_event/num_over_200 << " | " << (double)B_B/num_under_200 << " |" << std::endl;
+	ofs << "| P_true > 200 | " << num_p_true_over_p_rec_over << "/" << num_p_true_over << "=" << (double) num_p_true_over_p_rec_over/num_p_true_over << " | " << num_p_true_over_p_rec_under << "/" <<  num_p_true_over << "=" << (double) num_p_true_over_p_rec_under/num_p_true_over << " |" << std::endl;
+	ofs << "| P_true < 200 | " << num_p_true_under_p_rec_over << "/" << num_p_true_under << "=" << (double) num_p_true_under_p_rec_over/num_p_true_under << " | " << num_p_true_under_p_rec_under << "/" << num_p_true_under << "=" << (double) num_p_true_under_p_rec_under/num_p_true_under << " |" << std::endl;
+
+	ofs << std::endl << std::endl;
+	ofs << "Only muon tracks." << std::endl;
+	ofs << "| | P_rec > 200 | P_rec < 200 |" << std::endl;
+	ofs << "| --- | --- | --- |" << std::endl;
+	ofs << "| P_true > 200 | " << num_mu_p_true_over_p_rec_over << "/" << num_mu_p_true_over << "=" << (double) num_mu_p_true_over_p_rec_over/num_mu_p_true_over << " | " << num_mu_p_true_over_p_rec_under << "/" << num_mu_p_true_over << "=" << (double) num_mu_p_true_over_p_rec_under/num_mu_p_true_over << " |" << std::endl;
+	ofs << "| P_true < 200 | " << num_mu_p_true_under_p_rec_over << "/" << num_mu_p_true_under << "=" << (double) num_mu_p_true_under_p_rec_over/num_mu_p_true_under << " | " << num_mu_p_true_under_p_rec_under << "/" << num_mu_p_true_under << "=" << (double) num_mu_p_true_under_p_rec_under/num_mu_p_true_under << " |" << std::endl;
 }
 
 int main(int argc, char** argv) {
+
 	ReadVertexFile("./output/vtx_info_nuall_00010-00039_p500_numucc_v20230706_reconnected_measured_mometum_100plates.txt");
 	CalcRatio("./output/p_true_vs_p_rec_100plates_reconnected.txt");
+
+	//ReadVertexFile("./output/vtx_info_nuall_00010-00039_p500_numucc_v20230706_reconnected_measured_mometum_100plates.txt");
+	//CalcRatio("./output/p_true_vs_p_rec_100plates_reconnected.txt");
 	return 0;
 }
