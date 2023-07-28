@@ -1,6 +1,0 @@
--fno-exceptions
--I/usr/local/ROOT/root5.34.38/include/
--I/usr/local/DsTau/DsTauSoft/Fedra/include/
--I./include/
--I/usr/include/c++/9/
--I/home/mnonaka/environment/FASERSoft/FnuMomCoord/include/
