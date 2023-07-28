@@ -1,5 +1,5 @@
-TARGET=calc_momentum
-#TARGET=ratio_ptrue_prec
+#TARGET=calc_momentum
+TARGET=ratio_ptrue_prec
 #TARGET = mu_pi_ratio
 
 #FEDRALIBS := -lEIO -lEdb -lEbase -lEdr -lScan -lAlignment -lEmath -lEphys -lvt -lDataConversion -lEDA -lShower -lScan -lMLP -lSpectrum

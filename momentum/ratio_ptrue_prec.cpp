@@ -155,7 +155,11 @@ void CalcRatio(std::string output_file = "./output/p_true_vs_p_rec.txt") {
 	bool is_mu_p_true_over_200;
 	bool is_mu_p_rec_over_200;
 
+	bool is_this_event_valid; // Skip the event if it includes a track whose p=-999
+
 	for (int i=0; i<verteces.size(); i++) {
+		is_this_event_valid = true;
+		
 		Vertex vertex = verteces[i];
 		int ivertex = vertex.ivertex;
 
@@ -177,6 +181,7 @@ void CalcRatio(std::string output_file = "./output/p_true_vs_p_rec.txt") {
 			Track track = tracks[j];
 			ofs << "PGD: " << track.pdg_id << "\tNpl: " << track.npl << "\tP_true: " << track.p_true << "\tP_rec: " << track.p_reco << std::endl;
 
+			if (track.p_reco == -999) is_this_event_valid = false;
 
 			if (track.p_true > 200) is_p_true_over_200 = true;
 			if (track.p_reco > 200) is_p_rec_over_200 = true;
@@ -186,6 +191,8 @@ void CalcRatio(std::string output_file = "./output/p_true_vs_p_rec.txt") {
 				if (track.p_reco > 200) is_mu_p_rec_over_200 = true;
 			}
 		}
+
+		if (!is_this_event_valid) continue; // Skip this event if it includes a track whose p=-999
 
 		// Check if p_true > 200.
 		if (is_p_true_over_200) {
@@ -255,10 +262,16 @@ void CalcRatio(std::string output_file = "./output/p_true_vs_p_rec.txt") {
 
 int main(int argc, char** argv) {
 
-	ReadVertexFile("./output/vtx_info_nuall_00010-00039_p500_numucc_v20230706_reconnected_measured_mometum_100plates.txt");
-	CalcRatio("./output/p_true_vs_p_rec_100plates_reconnected.txt");
+	char* input_vertex_file;
+	char* output_file;
 
-	//ReadVertexFile("./output/vtx_info_nuall_00010-00039_p500_numucc_v20230706_reconnected_measured_mometum_100plates.txt");
-	//CalcRatio("./output/p_true_vs_p_rec_100plates_reconnected.txt");
+	for (int i=1; i<argc; i+=2) {
+		if (std::string(argv[i]) == "-V") input_vertex_file = argv[i+1];
+		else if (std::string(argv[i]) == "-O") output_file = argv[i+1];
+	}
+
+	ReadVertexFile(input_vertex_file);
+	CalcRatio(output_file);
+
 	return 0;
 }

@@ -189,7 +189,7 @@ bool IsFileValid(std::string input_files) {
 }
 
 
-void CalcMomentum(std::string linked_tracks_file) {
+void CalcMomentum(std::string linked_tracks_file, const char* par_file="../par/MC_plate_1_100.txt") {
 	// Extrach Track ID.
 	std::string pattern = "evt_(\\d+)_";
 	std::regex regex(pattern);
@@ -222,8 +222,7 @@ void CalcMomentum(std::string linked_tracks_file) {
 
 	// For the momentum measurement.
 	FnuMomCoord mc;
-	//mc.ReadParFile("/home/mnonaka/environment/FASERSoft/FnuMomCoord/par/MC_plate_1_50.txt");
-	mc.ReadParFile("/home/mnonaka/environment/FASERSoft/FnuMomCoord/par/MC_plate_1_100.txt");
+	mc.ReadParFile(par_file);
 	mc.ShowPar();
 
 
@@ -356,7 +355,7 @@ void WriteVertexFileIntoRootFile(std::string output_file) {
 	file -> Close();
 }
 
-void Run(std::string ltlists) {
+void Run(std::string ltlists, const char* par_file="../par/MC_plate_1_100.txt") {
 	std::ifstream ifs(ltlists);
 
 	if (ifs.fail()) {
@@ -367,7 +366,7 @@ void Run(std::string ltlists) {
 	//c -> Print("test.pdf[");
 	std::string path;
 	while(std::getline(ifs, path)) {
-		CalcMomentum(path);
+		CalcMomentum(path, par_file);
 	}
 
 	std::cout << "Invalid files: " << std::endl;
@@ -378,15 +377,27 @@ void Run(std::string ltlists) {
 }
 
 int main(int argc, char** argv) {
-	ReadVertexFile("./input_files/vtx_info_nuall_00010-00039_p500_numucc_v20230706.txt");
+	char* input_vertex_file;
+	char* input_list;
+	char* output_vertex_file;
+	char* par_file = nullptr;
 
-	//CalcMomentum("/data/FASER/fasernu-pilot-run/MDC_rec_tmp/20230402_nuall_00010-00019_p300/evt_21581_pl107_527/linked_tracks.root");
-	//Run("./input_files/LTList.txt.debug");
-	Run("./input_files/LTList_reconnected.txt");
+	for (int i=1; i<argc; i+=2) {
+		if (std::string(argv[i]) == "-V") input_vertex_file = argv[i+1];
+		else if (std::string(argv[i]) == "-I") input_list = argv[i+1];
+		else if (std::string(argv[i]) == "-O") output_vertex_file = argv[i+1];
+		else if (std::string(argv[i]) == "-P") par_file = argv[i+1];
+	}
 
-	WriteVertexFile("./output/vtx_info_nuall_00010-00039_p500_numucc_v20230706_reconnected_measured_mometum_100plates.txt");
-	//WriteVertexFile("./output/vtx_test.txt");
-	//WriteVertexFileIntoRootFile("./output/vtx_info_nuall_00010-00039_p500_numucc_v20230706_reconnected_measured_mometum_100plates.txt");
+	ReadVertexFile(input_vertex_file);
+
+	if (par_file == nullptr) {
+		Run(input_list);
+	} else {
+		Run(input_list, par_file);
+	}
+
+	WriteVertexFile(output_vertex_file);
 	
 	return 0;
 }
