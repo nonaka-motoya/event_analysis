@@ -48,9 +48,8 @@ struct Vertex {
 std::vector<Track> tracks;
 std::vector<Vertex> verteces;
 std::vector<std::string> invalid_files;
+FnuMomCoord mc; // For momentum measurement.
 
-// DEBUG
-//TCanvas* c = new TCanvas("c");
 
 // To sort Track structure.
 bool compareTrackId(const Track& track, const Track& target_track) {
@@ -189,7 +188,7 @@ bool IsFileValid(std::string input_files) {
 }
 
 
-void CalcMomentum(std::string linked_tracks_file, const char* par_file="../par/MC_plate_1_100.txt") {
+void CalcMomentum(std::string linked_tracks_file) {
 	// Extrach Track ID.
 	std::string pattern = "evt_(\\d+)_";
 	std::regex regex(pattern);
@@ -219,11 +218,6 @@ void CalcMomentum(std::string linked_tracks_file, const char* par_file="../par/M
 	std::vector<Track>::iterator iter_upper = std::upper_bound(tracks.begin(), tracks.end(), track, compareTrackId);
 	int idx_lower = std::distance(tracks.begin(), iter_lower);
 	int idx_upper = std::distance(tracks.begin(), iter_upper);
-
-	// For the momentum measurement.
-	FnuMomCoord mc;
-	mc.ReadParFile(par_file);
-	mc.ShowPar();
 
 
 	for (int i=idx_lower; i<idx_upper; i++) {
@@ -363,11 +357,16 @@ void Run(std::string ltlists, const char* par_file="../par/MC_plate_1_100.txt") 
 		exit(1);
 	}
 
+	// For the momentum measurement.
+	mc.ReadParFile(par_file);
+
 	//c -> Print("test.pdf[");
 	std::string path;
 	while(std::getline(ifs, path)) {
-		CalcMomentum(path, par_file);
+		CalcMomentum(path);
 	}
+
+	mc.ShowPar();
 
 	std::cout << "Invalid files: " << std::endl;
 	for (auto file: invalid_files) {
