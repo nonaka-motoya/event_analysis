@@ -25,17 +25,18 @@ source create_input_path.sh /mnt/004_Disk2/FASERnu_MC/20230212_nuall_00030-00039
 [calc_mom.sh](https://github.com/nonaka-motoya/event_analysis/blob/master/momentum/calc_mom.sh)を編集してください。
 
 例：
-```
+```shell
 mkdir ./output
-./calc_momentum -V ./input_files/vtx_info_nuall_00010-00039_p500_numucc_v20230706.txt -I ./input_files/LTList.txt.debug -O ./output/vtx_test.txt
+./calc_momentum -V ./input_files/vtx_info_nuall_00010-00039_p500_numucc_v20230706.txt -I ./input_files/LTList.txt.debug -O ./output/vtx_test.txt -P ../par/MC_plate_1_100.txt
 ```
 説明:
 * -V: vertex fileのパス
 * -I: [Usage 1](https://github.com/nonaka-motoya/event_analysis/tree/master/momentum#1-linked_tracks%E3%81%AE%E3%83%91%E3%82%B9%E3%81%AE%E3%83%AA%E3%82%B9%E3%83%88%E3%82%92%E4%BD%9C%E6%88%90)で作成したlinked_tracks.rootのパスのリストのテキストファイルのパス
 * -O: p_recの詰められたvertex fileの出力場所
+* -P: 運動量測定の際のパラメータファイル
 
 編集後実行してください。
-```
+```shell
 source calc_mom.sh
 ```
 
