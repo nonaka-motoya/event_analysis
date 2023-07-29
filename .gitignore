@@ -2,3 +2,4 @@
 ._.DS_Store
 compile_flags.txt
 *.txt
+!par/*.txt
