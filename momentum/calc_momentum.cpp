@@ -122,7 +122,7 @@ void ReadVertexFile(std::string vtx_file) {
 			iss >> plate_id_first >> seg_id_first >> x_first >> y_first >> plate_id_last >> npl >> pdg_id >> p_true >> p_reco >> event_id;
 
 			Track track;
-			track.event_id = event_id;
+			track.event_id = event_id % 100000;
 			track.plate_id = plate_id_first;
 			track.seg_id = seg_id_first;
 			track.ivertex = ivertex;
