@@ -168,7 +168,7 @@ bool IsTrack(EdbTrackP* track, int event_id, int plate_id, int seg_id) {
 
 bool IsFileValid(std::string input_files) {
 	TFile* file = new TFile(input_files.c_str(), "READ");
-	if (!file->IsOpen()) {
+	if (!file->IsOpen() or file->IsZombie()) {
 		invalid_files.push_back(input_files);
 		file -> Close();
 		return false;
