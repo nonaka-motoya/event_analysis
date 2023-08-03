@@ -202,7 +202,7 @@ void CalcMomentum(std::string linked_tracks_file) {
 		exit(1);
 	}
 
-	TString cut = Form("(s.eMCEvt%%100000)==%d", std::stoi(event_id));
+	TString cut = Form("(s.eMCEvt%%100000)==%d", std::stoi(event_id)%100000);
 
 	EdbDataProc* dproc = new EdbDataProc;
 	EdbPVRec* pvr = new EdbPVRec;
