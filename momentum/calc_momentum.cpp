@@ -213,7 +213,7 @@ void CalcMomentum(std::string linked_tracks_file) {
 	int ntrk = pvr -> Ntracks();
 	
 	Track track;
-	track.event_id = std::stoi(event_id);
+	track.event_id = std::stoi(event_id)%100000;
 	std::vector<Track>::iterator iter_lower = std::lower_bound(tracks.begin(), tracks.end(), track, compareTrackId);
 	std::vector<Track>::iterator iter_upper = std::upper_bound(tracks.begin(), tracks.end(), track, compareTrackId);
 	int idx_lower = std::distance(tracks.begin(), iter_lower);
