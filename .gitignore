@@ -2,4 +2,5 @@
 ._.DS_Store
 compile_flags.txt
 *.txt
+*.pdf
 !par/*.txt
