@@ -88,7 +88,6 @@ bool IsFileValid(std::string input_files) {
 
 bool IsTrack(EdbTrackP* track, int event_id, int plate_id, int seg_id) {
 	int nseg = track -> N();
-	std::cout << track -> GetSegmentFirst() -> ID() << "\t" << seg_id << std::endl;
 	for (int i=0; i<nseg; i++) {
 		EdbSegP* seg = track -> GetSegment(i);
 		if ((seg -> MCEvt()%100000)==event_id%100000 and seg -> ScanID().GetPlate() == plate_id and seg -> ID() == seg_id) return true;
