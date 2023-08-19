@@ -28,7 +28,7 @@ bool ReadLinkedTracks(std::string filePath, int event_id, int track_id) {
 			EdbTrackP* track = (EdbTrackP*) ts -> GetTrackBase(i);
 			if (track == primary_track) continue;
 			EdbSegP* first_seg = track -> GetSegmentFirst();
-			if ((first_seg->PID() - last_seg->PID())<5 and (first_seg->PID() - last_seg->PID())>=0 and EdbEDAUtil::CalcDmin(first_seg, last_seg) < 10) {
+			if ((first_seg->PID() - last_seg->PID())<5 and (first_seg->PID() - last_seg->PID())>=0 and EdbEDAUtil::CalcDmin(first_seg, last_seg) < 20) {
 				ts -> AddTrack(track);
 			}
 		}
