@@ -17,6 +17,9 @@
 
 #include "FnuMomCoord.hpp"
 
+EdbDataProc* dproc;
+EdbPVRec* pvr;
+
 
 // To specify track uniquely
 struct Track {
@@ -122,7 +125,7 @@ void ReadVertexFile(std::string vtx_file) {
 			iss >> plate_id_first >> seg_id_first >> x_first >> y_first >> plate_id_last >> npl >> pdg_id >> p_true >> p_reco >> event_id;
 
 			Track track;
-			track.event_id = event_id % 100000;
+			track.event_id = event_id;
 			track.plate_id = plate_id_first;
 			track.seg_id = seg_id_first;
 			track.ivertex = ivertex;
@@ -204,8 +207,7 @@ void CalcMomentum(std::string linked_tracks_file) {
 
 	TString cut = Form("(s.eMCEvt%%100000)==%d", std::stoi(event_id)%100000);
 
-	EdbDataProc* dproc = new EdbDataProc;
-	EdbPVRec* pvr = new EdbPVRec;
+	if (pvr->eTracks) pvr->eTracks->Clear();
 
 	if (!IsFileValid(linked_tracks_file)) return;
 
@@ -213,7 +215,7 @@ void CalcMomentum(std::string linked_tracks_file) {
 	int ntrk = pvr -> Ntracks();
 	
 	Track track;
-	track.event_id = std::stoi(event_id)%100000;
+	track.event_id = std::stoi(event_id);
 	std::vector<Track>::iterator iter_lower = std::lower_bound(tracks.begin(), tracks.end(), track, compareTrackId);
 	std::vector<Track>::iterator iter_upper = std::upper_bound(tracks.begin(), tracks.end(), track, compareTrackId);
 	int idx_lower = std::distance(tracks.begin(), iter_lower);
@@ -230,6 +232,7 @@ void CalcMomentum(std::string linked_tracks_file) {
 			EdbTrackP* track = pvr -> GetTrack(itrk);
 			if (IsTrack(track, eve, plate_id, track_id)) {
 				tracks[i].p_reco = mc.CalcMomentum(track, 0);
+				std::cout << "Measured." << std::endl;
 				tracks[i].plate_id_last = track -> GetSegmentLast() -> ScanID().GetPlate();
 				tracks[i].npl = track -> Npl();
 				//mc.DrawMomGraphCoord(track, c, "test");
@@ -389,6 +392,9 @@ int main(int argc, char** argv) {
 	}
 
 	ReadVertexFile(input_vertex_file);
+
+	dproc = new EdbDataProc;
+	pvr = new EdbPVRec;
 
 	if (par_file == nullptr) {
 		Run(input_list);
