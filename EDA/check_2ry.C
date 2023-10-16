@@ -1,4 +1,20 @@
+/**
+*	@file		check_2ry.C
+*	@brief		hadronに2ry hadronがいないかをチェックするマクロ
+*	@author		Motoya Nonaka
+*	@date		12th Oct 2023
+*	@note		実行方法: root -l check_2ry <dir name> <event_id> <track_id>
+*/
 
+
+/**
+*	@fn
+*	@brief		trackの2ry trackを探してEDA displayで表示する
+*	@param[in]	filePath	linked_tracks.rootのパス
+*	@param[in]	event_id	Event ID
+*	@param[in]	track_id	Track ID
+*	@return		bool	Displayで表示するトラックがいればtrueを返す
+*/
 bool ReadLinkedTracks(std::string filePath, int event_id, int track_id) {
 	bool isTrack = false;
 
@@ -45,6 +61,14 @@ bool ReadLinkedTracks(std::string filePath, int event_id, int track_id) {
 }
 
 
+/**
+ *	@fn
+ *	@brief		event_idとtrack_idが一致するイベントの入ったlinked_tracks.rootを探す
+ *	@param[in]	directory	イベントを探すディレクトリ
+ *	@param[in]	event_id	Event ID
+ *	@param[in]	trac_id		Event ID
+ *	@return		void
+ */
 void ReadFiles(char* directory, int event_id, int track_id) {
 	TSystemDirectory dir(directory, directory);
 	TList* fileList = dir.GetListOfFiles();
@@ -81,6 +105,10 @@ void ReadFiles(char* directory, int event_id, int track_id) {
 	}
 }
 
-void check_2ry(char* input_file, int event_id, int track_id) {
-	ReadFiles(input_file, event_id, track_id);
+/**
+*	@fn
+*	@brief		main関数
+*/
+void check_2ry(char* directory, int event_id, int track_id) {
+	ReadFiles(directory, event_id, track_id);
 }
