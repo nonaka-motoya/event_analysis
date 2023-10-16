@@ -1,6 +1,10 @@
+*
+!*/
+!*.*
 .DS_Store
 ._.DS_Store
 compile_flags.txt
 *.txt
 *.pdf
 !par/*.txt
+.tmp.*
