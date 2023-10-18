@@ -1,3 +1,10 @@
+/**
+*	@file		calc_momentum.cpp
+*	@brief		vertex fileにreconstructed momentumを詰める
+*	@author		Motoya Nonaka
+*	@date		18th Oct 2023
+*/
+
 #include <iostream>
 #include <fstream>
 #include <ostream>
@@ -15,43 +22,49 @@
 
 #include <EdbDataSet.h>
 
+#include "EdbEDAUtil.h"
 #include "FnuMomCoord.hpp"
 
-EdbDataProc* dproc;
-EdbPVRec* pvr;
-
-
-// To specify track uniquely
+/**
+*	@struct		Track
+*	@brief		To specify track uniquely
+*/
 struct Track {
-	int event_id;
-	int plate_id;
-	int seg_id;
-	double x_first;
-	double y_first;
-	int plate_id_last;
-	int npl;
-	int pdg_id;
-	double p_true;
-	double p_reco;
-	int ivertex;
+	int event_id;		// Event ID
+	int plate_id;		// Plate of first segment
+	int seg_id;			// Segment ID of first segment
+	double x_first;		// X of first segment
+	double y_first;		// Y of first segment
+	int plate_id_last;	// Plate of last segment
+	int npl;			// Number of plates
+	int pdg_id;			// PDG ID
+	double p_true;		// Truth momenum
+	double p_reco;		// Reconstructed momentum
+	int ivertex;		// Index of the vertex
 };
 
 
-// To specify vertex uniquely.
+/**
+*	@struct		Vertex
+*	@brief		To specify vertex uniquely
+*/
 struct Vertex {
-	int area_id;
+	int area_id;		// Area ID
 	double vx;
 	double vy;
 	int plate;
 	int ntrk;
-	int ivertex;
+	int ivertex;		//Index of the vertex
 };
 
 // Global variables.
 std::vector<Track> tracks;
 std::vector<Vertex> verteces;
+std::vector<std::string> files;
 std::vector<std::string> invalid_files;
 FnuMomCoord mc; // For momentum measurement.
+EdbDataProc* dproc;
+EdbPVRec* pvr;
 
 
 // To sort Track structure.
@@ -65,28 +78,44 @@ bool compareIVertex(const T& struct1, const T& struct2) {
 	return struct1.ivertex < struct2.ivertex;
 }
 
+/*
+*	@fn			ExtractEventID
+*	@param[in]	str		文字列
+*/
+int ExtractEventID(std::string str, std::string pattern="evt_(\\d+)_") {
+	std::regex regex(pattern);
+	std::smatch match;
+	std::string event_id;
 
-// Read MC files using list file.
-void ReadMCFiles(std::string list_file) {
-	std::ifstream ifs(list_file);
-
-	if (ifs.fail()) {
-		std::cerr << "Failed to open this file." << std::endl;
+	if (std::regex_search(str, match, regex) && match.size() > 1) {
+		event_id = match.str(1);
+	} else {
+		std::cerr << "Error: Couldn't extract Track ID from the filename." << std::endl;
 		exit(1);
 	}
 
-	std::string line_buf;
-	while (std::getline(ifs, line_buf)) {
-		std::cout << line_buf << std::endl;
-	}
+	return std::stoi(event_id);
 }
 
-// Read a MC file.
-void ReadMCFile(std::string MC_file) {
-	TFile* file = new TFile(MC_file.c_str(), "READ");
-	TTree* tree = (TTree*) file -> Get("");
+/*
+*	@fn			compareFile
+*	@brief		To sort path of linked_tracks.root with event ID.
+*	@param[in]
+*	@param[in]
+*	@return		bool
+*/
+bool CompareFile(const std::string& lhs, std::string& rhs) {
+	int lhs_event_id = ExtractEventID(lhs);
+	int rhs_event_id = ExtractEventID(rhs);
+	return lhs_event_id < rhs_event_id;
 }
 
+/**
+*	@fn			ReadVertexFile
+*	@brief		Vertex fileを読み込んで構造体に詰める。
+*	@param[in]	vtx_file	Vertex fileのパス
+*	@return		void
+*/
 void ReadVertexFile(std::string vtx_file) {
 	std::ifstream ifs(vtx_file);
 
@@ -97,17 +126,16 @@ void ReadVertexFile(std::string vtx_file) {
 
 	std::string type_name; // 1ry_vtx or 1ry_track.
 
-	// For tracks.
+	// Variables for tracks.
 	int plate_id_first, seg_id_first, plate_id_last, npl, pdg_id, event_id;
 	float x_first, y_first, p_true, p_reco;
 
-	// For veteces.
+	// Variables for veteces.
 	int area_id, plate_id, ntrk;
 	double vx, vy;
 
-	// For the matching of vertex and tracks;
+	// For the matching between vertex and tracks;
 	int ivertex = -1;
-
 
 	std::string line_buf;
 	while (std::getline(ifs, line_buf)) {
@@ -156,7 +184,35 @@ void ReadVertexFile(std::string vtx_file) {
 	}
 
 	// Sort for binary search.
-	std::sort(tracks.begin(), tracks.end(), compareTrackId);
+	//std::sort(tracks.begin(), tracks.end(), compareTrackId);
+	std::sort(tracks.begin(), tracks.end(), compareIVertex<Track>);
+}
+
+/**
+*	@fn			ReadFilePath
+*	@breif		リストファイルからlinked_tracks.rootのパスを読み、filesに詰める
+*	@param[in]	ltlists		linked_tracks.rootのパスが書かれているテキストファイルのパス
+*	@par		Modify
+*		- files
+*	@return		void
+*/
+void ReadFilePath(std::string ltlists) {
+	std::ifstream ifs(ltlists);
+
+	// Error handling
+	if (ifs.fail()) {
+		std::cerr << "Error! Could not open the file." << std::endl;
+		exit(1);
+	}
+
+	std::string path;
+	while(std::getline(ifs, path)) {
+		files.push_back(path);
+	}
+
+	std::sort(files.begin(), files.end(), CompareFile);
+
+	return;
 }
 
 bool IsTrack(EdbTrackP* track, int event_id, int plate_id, int seg_id) {
@@ -179,7 +235,7 @@ bool IsFileValid(std::string input_files) {
 	TTree* tree = (TTree*) file -> Get("tracks");
 
 	int nentries = tree -> GetEntries();
-	std::cout << nentries << " entries." << std::endl;
+	//std::cout << nentries << " entries." << std::endl;
 
 	if (nentries == 0) {
 		invalid_files.push_back(input_files);
@@ -191,6 +247,60 @@ bool IsFileValid(std::string input_files) {
 }
 
 
+/*
+*	@fn			FillMomentum
+*	@param[in]	event_id	探すevent_id
+*	@param[in]	start	tracksの最初のindex
+*	@param[in]	end		tracksの最初のindex
+*	@par		Refer
+*	@return		void
+*/
+void FillMomentum(int event_id, int start, int end) {
+	for (int i=-1; i<6; i++) {
+
+		int ev = i * 1000000 + event_id;
+		//event idにマッチするpathを取得する
+		auto iter_file = std::find_if(files.begin(), files.end(),
+								   [&](std::string str) {
+									return ExtractEventID(str) == ev;
+								   }
+		);
+		if (iter_file == files.end()) continue;	// File not found.
+		
+		std::string file = *iter_file;
+		std::cout << file << std::endl;
+		
+		TString cut = Form("s.eMCEvt==%d", event_id);
+		dproc -> ReadTracksTree(*pvr, file.c_str(), cut);
+		int ntrk = pvr -> Ntracks();
+
+		for (int j=0; j<ntrk; j++) {
+			EdbTrackP* track = pvr->GetTrack(j);
+			for (int k=start; k<end; k++) {
+				tracks[k];
+				int track_id = tracks[k].seg_id;
+				int plate_id = tracks[k].plate_id;
+				if (IsTrack(track, event_id, plate_id, track_id)) {
+					double mom = mc.CalcMomentum(track, 0);
+					tracks[k].p_reco = mom;
+				}
+			}
+		}
+	}
+
+	//for (Track track: v_trks) {
+	//	std::cout << "1ry_trk" << "\t" << track.plate_id << "\t" << track.seg_id << "\t" << track.x_first << "\t" << track.y_first << "\t" << track.plate_id_last << "\t" << track.npl << "\t" << track.pdg_id << "\t" << track.p_true << "\t" << track.p_reco << "\t" << track.event_id << std::endl;
+	//}
+	//std::cout << std::endl;
+
+	if (pvr->eTracks) pvr->eTracks->Clear();
+
+	return;
+}
+
+
+// Old version.
+/*
 void CalcMomentum(std::string linked_tracks_file) {
 	// Extrach Track ID.
 	std::string pattern = "evt_(\\d+)_";
@@ -242,8 +352,10 @@ void CalcMomentum(std::string linked_tracks_file) {
 
 
 }
+*/
 
 void WriteVertexFile(std::string output_file) {
+	std::cout << "Writing ..." << std::endl;
 	std::ofstream ofs(output_file);
 
 	// Sort tracks and verteces with ivertex;
@@ -270,6 +382,9 @@ void WriteVertexFile(std::string output_file) {
 	}
 
 	ofs.close();
+
+	std::cout << "Done." << std::endl;
+	return;
 	
 }
 
@@ -350,8 +465,51 @@ void WriteVertexFileIntoRootFile(std::string output_file) {
 	tree_vertex -> Write();
 	tree_track -> Write();
 	file -> Close();
+
+	return;
 }
 
+/**
+*	@fn			Run
+*	@brief		運動量測定を実行する関数
+*	@return void
+*	@detail
+*	はじめに運動量測定クラスの設定を行う。次にltlistsを1行ずつ読み、一つのlinked_tracks.rootファイルごとに運動量測定を行う。
+*/
+void Run(const char* par_file="../par/MC_plate_1_100.txt") {
+	// Setup for momenum measurement.
+	std::cout << "Read par file for momentum measurement." << std::endl;
+	mc.ReadParFile(par_file);
+
+	// Loop for the vertex.
+	for (Vertex vertex: verteces) {
+		int ivertex = vertex.ivertex;
+
+	  	Track trk_buf;
+	  	trk_buf.ivertex = ivertex;
+		std::vector<Track>::iterator iter_lower = std::lower_bound(tracks.begin(), tracks.end(), trk_buf, compareIVertex<Track>);
+		std::vector<Track>::iterator iter_upper = std::upper_bound(tracks.begin(), tracks.end(), trk_buf, compareIVertex<Track>);
+		int idx_lower = std::distance(tracks.begin(), iter_lower);
+		int idx_upper = std::distance(tracks.begin(), iter_upper);
+
+		int event_id = tracks[idx_lower].event_id;
+		FillMomentum(event_id, idx_lower, idx_upper);
+	}
+
+	return;
+}
+
+/**
+*	@fn			Run
+*	@brief		運動量測定を実行する関数
+*	@param[in]	ltlists		linked_tracks.rootのパスが列挙されたファイルのパス
+*	@param[in]	par_file	運動量測定の際のパラメータファイル
+*	@return void
+*	@detail
+*	はじめに運動量測定クラスの設定を行う。次にltlistsを1行ずつ読み、一つのlinked_tracks.rootファイルごとに運動量測定を行う。
+*/
+// Old version.
+/*
 void Run(std::string ltlists, const char* par_file="../par/MC_plate_1_100.txt") {
 	std::ifstream ifs(ltlists);
 
@@ -363,7 +521,6 @@ void Run(std::string ltlists, const char* par_file="../par/MC_plate_1_100.txt") 
 	// For the momentum measurement.
 	mc.ReadParFile(par_file);
 
-	//c -> Print("test.pdf[");
 	std::string path;
 	while(std::getline(ifs, path)) {
 		CalcMomentum(path);
@@ -375,8 +532,8 @@ void Run(std::string ltlists, const char* par_file="../par/MC_plate_1_100.txt") 
 	for (auto file: invalid_files) {
 		std::cout << file << std::endl;
 	}
-	//c -> Print("test.pdf]");
 }
+*/
 
 int main(int argc, char** argv) {
 	char* input_vertex_file;
@@ -384,6 +541,11 @@ int main(int argc, char** argv) {
 	char* output_vertex_file;
 	char* par_file = nullptr;
 
+	// Read arguments
+	// -V: Path of input vertex file
+	// -I: Path of list file of linked_tracks.root
+	// -O: Path of output vertex file
+	// -P: Path of parameter file for momentum measurement
 	for (int i=1; i<argc; i+=2) {
 		if (std::string(argv[i]) == "-V") input_vertex_file = argv[i+1];
 		else if (std::string(argv[i]) == "-I") input_list = argv[i+1];
@@ -392,15 +554,20 @@ int main(int argc, char** argv) {
 	}
 
 	ReadVertexFile(input_vertex_file);
+	ReadFilePath(input_list);
 
 	dproc = new EdbDataProc;
 	pvr = new EdbPVRec;
 
+	Run(par_file);
+
+	/*
 	if (par_file == nullptr) {
 		Run(input_list);
 	} else {
 		Run(input_list, par_file);
 	}
+	*/
 
 	WriteVertexFile(output_vertex_file);
 	
