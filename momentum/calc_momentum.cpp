@@ -258,7 +258,7 @@ bool IsFileValid(std::string input_files) {
 void FillMomentum(int event_id, int start, int end) {
 	for (int i=-1; i<6; i++) {
 
-		int ev = i * 1000000 + event_id;
+		int ev = i * 100000 + event_id;
 		//event idにマッチするpathを取得する
 		auto iter_file = std::find_if(files.begin(), files.end(),
 								   [&](std::string str) {
