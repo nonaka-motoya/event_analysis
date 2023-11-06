@@ -1,6 +1,4 @@
-TARGET=calc_momentum
-#TARGET=ratio_ptrue_prec
-#TARGET=fill_momentum
+TARGET ?= calc_momentum
 
 #FEDRALIBS := -lEIO -lEdb -lEbase -lEdr -lScan -lAlignment -lEmath -lEphys -lvt -lDataConversion -lEDA -lShower -lScan -lMLP -lSpectrum
 FEDRALIBS := -lEdr -lAlignment -lEIO -lEdb -lEbase -lScan  -lEmath -lEphys -lvt -lDataConversion -lEDA -lShower -lScan -lMLP -lSpectrum 

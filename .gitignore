@@ -1,6 +1,7 @@
 *
 !*/
 !*.*
+!Makefile
 .DS_Store
 ._.DS_Store
 compile_flags.txt
@@ -8,3 +9,7 @@ compile_flags.txt
 *.pdf
 !par/*.txt
 .tmp.*
+env.sh
+scripts/
+input/
+output/

@@ -1,17 +1,25 @@
-input_path="/data/Users/motoya/20230709/20230212_nuall_00010-00019_p500/"
-output_file="test.txt"
+# You need to create `env.sh` on the same directory.
+# And you should declare shell variables `INPUT_PATH` and `OUTPUT_FILE`.
+#
+# Example: 
+# ``` env.sh
+# INPUT_PATH="/data/Users/motoya/test_20230707_100091_klong/"
+# OUTPUT_FILE="./input_files/debug/LTList.txt.debug"
+# ```
+
+source env.sh
 
 if [ $# == 1 ]; then
 	if [ "$1" == "clean" ]; then
-		rm $output_file && touch $output_file
+		rm $OUTPUT_FILE && touch $OUTPUT_FILE
 		return
 	fi
-	input_path="$1"
+	INPUT_PATH="$1"
 fi
 
 
 while read file; do
 	if [[ "$file" =~ "evt_" ]]; then
-		echo "${input_path}${file}/linked_tracks.root" >> $output_file
+		echo "${INPUT_PATH}${file}/linked_tracks.root" >> $OUTPUT_FILE
 	fi
-done < <(ls -A -1 $input_path)
+done < <(ls -A -1 $INPUT_PATH)
