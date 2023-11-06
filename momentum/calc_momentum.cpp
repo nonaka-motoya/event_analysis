@@ -282,6 +282,7 @@ void FillMomentum(int event_id, int start, int end) {
 				int plate_id = tracks[k].plate_id;
 				if (IsTrack(track, event_id, plate_id, track_id)) {
 					double mom = mc.CalcMomentum(track, 0);
+					std::cout << "Measured." << std::endl;
 					tracks[k].p_reco = mom;
 				}
 			}

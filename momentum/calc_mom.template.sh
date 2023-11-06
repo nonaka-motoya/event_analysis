@@ -1,2 +1,2 @@
 mkdir ./output
-./calc_momentum -V ./input_files/vtx_info_nuall_00010-00039_p500_numucc_v20230706.txt -I ./input_files/LTList.txt.debug -O ./output/vtx_info.txt -P ../par/MC_plate_1_100.txt
+./calc_momentum -V ./input_files/debug/vtx_info_MC_klong.txt -I ./input_files/debug/LTList.txt.debug -O ./output/vtx_info.txt.debug -P ../par/MC_plate_1_100.txt

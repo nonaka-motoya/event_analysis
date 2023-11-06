@@ -8,3 +8,7 @@ compile_flags.txt
 *.pdf
 !par/*.txt
 .tmp.*
+env.sh
+scripts/
+input/
+output/
