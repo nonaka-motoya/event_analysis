@@ -6,6 +6,15 @@
 *	@note		実行方法: root -l check_2ry <dir name> <event_id> <track_id>
 */
 
+/// @fn IsFileExist
+/// @brief Check wheter the file exist or not.
+/// @param[in] std::string path
+/// @return bool True if the file exists.
+bool IsFileExist(std::string path) {
+	std::ifstream file(path);
+	return file.good();
+}
+
 
 /**
 *	@fn
@@ -96,6 +105,8 @@ void ReadFiles(char* directory, int event_id, int track_id) {
 				std::string filePath = std::string(directory);
 				filePath += fileNameStr;
 				filePath += "/linked_tracks.root";
+
+				if (!IsFileExist(filePath)) continue;
 
 				if (ReadLinkedTracks(filePath, event_id, track_id)) {
 					return;
