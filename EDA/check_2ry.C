@@ -138,5 +138,5 @@ void ReadFiles(char* directory, int event_id, int track_id, int plate) {
 *	@brief		main関数
 */
 void check_2ry(char* directory, int event_id, int track_id, int plate) {
-	ReadFiles(directory, event_id, track_id);
+	ReadFiles(directory, event_id, track_id, plate);
 }
