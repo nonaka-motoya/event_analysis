@@ -9,9 +9,9 @@ int icell_cut;
 double ini_mom = 100;
 double smearing = 0;  //smearing (micron)
 double X0 = 4.677;  //mm in compaund radiation length
-// double zW = 1.0;  //thickness of tungusten plate
+double zW = 1.0;  //thickness of tungusten plate
 // double X0 = 4.571;  //mm in compaund radiation length
-double zW = 1.1;  //thickness of tungusten plate
+// double zW = 1.1;  //thickness of tungusten plate
 double z = 1350;
 double cal_CoordArray[40]; // Coordでs_rmsをtrack,cell lengthに入れてる
 double cal_LateralArray[40];
