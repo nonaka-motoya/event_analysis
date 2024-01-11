@@ -6,6 +6,30 @@
 *	@note		実行方法: root -l check_2ry <dir name> <event_id> <track_id>
 */
 
+/// @fn IsFileExist
+/// @brief Check wheter the file exist or not.
+/// @param[in] std::string path
+/// @return bool True if the file exists.
+bool IsFileExist(std::string path) {
+	std::ifstream file(path);
+	return file.good();
+}
+
+/// @fn isTrack
+/// @brief Check track using event ID, track ID, plate number
+/// @param[in] track
+/// @param[in] event_id
+/// @param[in] track_id
+/// @param[in] plate
+/// @return bool
+bool IsTrack(EdbTrackP* track, int event_id, int track_id, int plate) {
+	for (int i=0; i<track->N(); i++) {
+		EdbSegP* seg = track->GetSegment(i);
+		if (seg->MCEvt()%100000==event_id%100000 and seg->ID() == track_id and seg->ScanID().GetPlate() == plate) return true;
+	}
+	return false;
+}
+
 
 /**
 *	@fn
@@ -13,9 +37,10 @@
 *	@param[in]	filePath	linked_tracks.rootのパス
 *	@param[in]	event_id	Event ID
 *	@param[in]	track_id	Track ID
+*	@param[in] plate s.eScanID.ePlate
 *	@return		bool	Displayで表示するトラックがいればtrueを返す
 */
-bool ReadLinkedTracks(std::string filePath, int event_id, int track_id) {
+bool ReadLinkedTracks(std::string filePath, int event_id, int track_id, int plate) {
 	bool isTrack = false;
 
 	std::cout << filePath << std::endl;
@@ -31,7 +56,7 @@ bool ReadLinkedTracks(std::string filePath, int event_id, int track_id) {
 	EdbTrackP* primary_track;
 	for (int i=0; i<nbase; i++) {
 		EdbTrackP* track = (EdbTrackP*) ts -> GetTrackBase(i);
-		if (track -> GetSegmentFirst() -> MCEvt()%100000==event_id%100000 and track -> GetSegmentFirst() -> ID() == track_id) {
+		if (IsTrack(track, event_id, track_id, plate)) {
 			isTrack = true;
 			ts -> AddTrack(track);
 			primary_track = track;
@@ -67,9 +92,10 @@ bool ReadLinkedTracks(std::string filePath, int event_id, int track_id) {
  *	@param[in]	directory	イベントを探すディレクトリ
  *	@param[in]	event_id	Event ID
  *	@param[in]	trac_id		Event ID
+ *	@param[in] plate s.eScanID.ePlate
  *	@return		void
  */
-void ReadFiles(char* directory, int event_id, int track_id) {
+void ReadFiles(char* directory, int event_id, int track_id, int plate) {
 	TSystemDirectory dir(directory, directory);
 	TList* fileList = dir.GetListOfFiles();
 
@@ -97,7 +123,9 @@ void ReadFiles(char* directory, int event_id, int track_id) {
 				filePath += fileNameStr;
 				filePath += "/linked_tracks.root";
 
-				if (ReadLinkedTracks(filePath, event_id, track_id)) {
+				if (!IsFileExist(filePath)) continue;
+
+				if (ReadLinkedTracks(filePath, event_id, track_id, plate)) {
 					return;
 				}
 			}
@@ -109,6 +137,6 @@ void ReadFiles(char* directory, int event_id, int track_id) {
 *	@fn
 *	@brief		main関数
 */
-void check_2ry(char* directory, int event_id, int track_id) {
-	ReadFiles(directory, event_id, track_id);
+void check_2ry(char* directory, int event_id, int track_id, int plate) {
+	ReadFiles(directory, event_id, track_id, plate);
 }
