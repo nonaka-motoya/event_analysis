@@ -10,6 +10,7 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <unordered_map>
 
 /// @struct Track
 /// @brief Structure for uniquely indentifying tracks.
@@ -38,6 +39,7 @@ struct Track {
 
 // Global variables
 std::vector<Track> tracks_over200_with_100plates; // Track whose momentum is smaller than 100 GeV with 50 plates.
+std::unordered_map<int, int> event_count_map;
 
 
 /// @fn PrintUsage
@@ -86,6 +88,7 @@ void pushTracksOver200With100plates(std::string filename) {
 		iss >> type_name;
 		if (type_name == "1ry_trk") {
 			iss >> plate_id_first >> seg_id_first >> x_first >> y_first >> plate_id_last >> npl >> pdg_id >> p_true >> p_reco >> event_id;
+			event_count_map[event_id]++;
 			if (p_reco > 200) {
 				Track t(event_id, seg_id_first, plate_id_first, p_reco, npl);
 				tracks_over200_with_100plates.push_back(t);
@@ -146,6 +149,18 @@ void printTracks() {
 	}
 }
 
+/// @fn PrintNumberOfEvents
+/// @brief Print number of events
+/// @return void
+/// @refer
+/// 	- event_count_map
+/// @note Note
+void PrintNumberOfEvents() {
+	std::cout << std::endl;
+	std::cout << "Number of all events: " << event_count_map.size() << std::endl;
+	return;
+}
+
 
 int main(int argc, char** argv) {
 	if (argc < 2) {
@@ -175,6 +190,7 @@ int main(int argc, char** argv) {
 
 	pushTracksOver200With100plates(vtx_file_100plates);
 	SearchTrackFailureMomentumSelection(vtx_file_50plates);
+	PrintNumberOfEvents();
 	
 	return 0;
 
