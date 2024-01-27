@@ -66,6 +66,7 @@ bool DrawMomGraph(std::string filename, int event_id, int track_id, int plate) {
             }
         }
         if (found_track) {
+            mc.CalcMomentum(track);
             mc.DrawMomGraphCoord(track, c, "mom_graph");
             return true;
         }
