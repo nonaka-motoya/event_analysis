@@ -26,7 +26,7 @@ struct Track {
 
 	Track(int event_id, int track_id, int plate_id, double momentum, int npl) :event_id(event_id), track_id(track_id), plate_id(plate_id), momentum(momentum), npl(npl) {}
 
-	void SetPTrue(int p_true) {
+	void SetPTrue(double p_true) {
 		this->p_true = p_true;
 	}
 
