@@ -21,7 +21,7 @@ struct Track {
 	int plate_id;
 	double momentum;
 	int npl;
-	int p_true;
+	double p_true;
 	int pdg_id;
 
 	Track(int event_id, int track_id, int plate_id, double momentum, int npl) :event_id(event_id), track_id(track_id), plate_id(plate_id), momentum(momentum), npl(npl) {}
