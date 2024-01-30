@@ -21,8 +21,18 @@ struct Track {
 	int plate_id;
 	double momentum;
 	int npl;
+	int p_true;
+	int pdg_id;
 
 	Track(int event_id, int track_id, int plate_id, double momentum, int npl) :event_id(event_id), track_id(track_id), plate_id(plate_id), momentum(momentum), npl(npl) {}
+
+	void SetPTrue(int p_true) {
+		this->p_true = p_true;
+	}
+
+	void SetPdgId(int pdg_id) {
+		this->pdg_id = pdg_id;
+	}
 
 	bool operator==(const Track& rhs) const {
 		return (event_id == rhs.event_id and track_id == rhs.track_id and plate_id == rhs.plate_id);
@@ -33,7 +43,7 @@ struct Track {
 	}
 
 	void Print() {
-		std::cout << "Event ID: " << event_id << "\tTrack ID: " << track_id << "\tPlate ID: " << plate_id << "\tNpl: " << npl << "\tMomentum: " << momentum << std::endl;
+		std::cout << "Event ID: " << event_id << "\tTrack ID: " << track_id << "\tPDG ID: " << pdg_id << "\tPlate ID: " << plate_id << "\tNpl: " << npl << "\tMomentum: " << momentum << "\tP_true: " << p_true << std::endl;
 	}
 };
 
@@ -47,8 +57,7 @@ std::unordered_map<int, int> event_count_map;
 /// @return void
 /// @note Note
 void PrintUsage() {
-	std::cerr << "Usage: " << std::endl;
-	std::cerr << "./selection_pass_fail_investigator -S <Vertex file with 50 plates> -L <Vertex file with 100 plates>" << std::endl;
+	std::cerr << "Usage: " << std::endl; std::cerr << "./selection_pass_fail_investigator -S <Vertex file with 50 plates> -L <Vertex file with 100 plates>" << std::endl;
 	return;
 }
 
@@ -91,6 +100,8 @@ void pushTracksOver200With100plates(std::string filename) {
 			event_count_map[event_id]++;
 			if (p_reco > 200) {
 				Track t(event_id, seg_id_first, plate_id_first, p_reco, npl);
+				t.SetPdgId(pdg_id);
+				t.SetPTrue(p_true);
 				tracks_over200_with_100plates.push_back(t);
 			}
 		}
@@ -125,6 +136,8 @@ void SearchTrackFailureMomentumSelection(std::string vtx_file_50plates) {
 			iss >> plate_id_first >> seg_id_first >> x_first >> y_first >> plate_id_last >> npl >> pdg_id >> p_true >> p_reco >> event_id;
 			if (p_reco < 100) {
 				Track t(event_id, seg_id_first, plate_id_first, p_reco, npl);
+				t.SetPdgId(pdg_id);
+				t.SetPTrue(p_true);
 				// Binary search
 				auto iter = std::lower_bound(tracks_over200_with_100plates.begin(), tracks_over200_with_100plates.end(), t);
 				if (*iter == t) {
